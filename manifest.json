@@ -1,0 +1,10 @@
+{
+	"id": "personal-dashboard",
+	"name": "Personal Dashboard",
+	"version": "0.0.1",
+	"minAppVersion": "1.7.2",
+	"description": "Personal Dashboard Obsidian plugin",
+	"author": "Nesherson",
+	"authorUrl": "https://github.com/nesherson",
+	"isDesktopOnly": false
+}
