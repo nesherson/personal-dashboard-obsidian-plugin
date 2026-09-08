@@ -2,6 +2,8 @@ export interface PersonalDashboardState {
 	captureItems: CaptureItem[];
 }
 
+export const TAGS = ['Idea', 'Task', 'Note'];
+
 export type Tag = 'Idea' | 'Task' | 'Note';
 
 export interface Area {
@@ -18,5 +20,5 @@ export interface CaptureItem {
 	id: string;
 	text: string;
 	tag: Tag;
-	time: Date;
+	time: number;
 }
