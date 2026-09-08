@@ -1,8 +1,11 @@
-import { Area, PersonalDashboardState } from '@/types/personalDashboardTypes';
+import {
+	CaptureItem,
+	PersonalDashboardState,
+} from '@/types/personalDashboardTypes';
 
 export type PersonalDashboardAction = {
-	type: 'LOAD_AREAS';
-	payload: Area[];
+	type: 'ADD_CAPTURE_ITEM';
+	payload: CaptureItem;
 };
 
 export function personalDashboardReducer(
@@ -10,10 +13,10 @@ export function personalDashboardReducer(
 	action: PersonalDashboardAction,
 ) {
 	switch (action.type) {
-		case 'LOAD_AREAS':
+		case 'ADD_CAPTURE_ITEM':
 			return {
 				...state,
-				areas: action.payload,
+				captureItems: [...state.captureItems, action.payload],
 			};
 	}
 }

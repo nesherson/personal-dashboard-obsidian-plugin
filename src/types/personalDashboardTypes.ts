@@ -1,6 +1,8 @@
 export interface PersonalDashboardState {
-	areas: Area[];
+	captureItems: CaptureItem[];
 }
+
+export type Tag = 'Idea' | 'Task' | 'Note';
 
 export interface Area {
 	id: string;
@@ -10,4 +12,11 @@ export interface Area {
 	icon?: string;
 	preview: string;
 	meta: string;
+}
+
+export interface CaptureItem {
+	id: string;
+	text: string;
+	tag: Tag;
+	time: Date;
 }
