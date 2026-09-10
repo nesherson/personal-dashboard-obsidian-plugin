@@ -43,6 +43,7 @@ export function QuickCapture({
 			<input
 				className="pd-capture__input"
 				placeholder="Note title"
+				value={title}
 				onChange={(e) => setTitle(e.target.value)}
 			/>
 			<textarea
