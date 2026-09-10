@@ -1,7 +1,6 @@
 import { CaptureItem, TAGS } from '@/types/personalDashboardTypes';
 import { OnCaptureProps, QuickCapture } from './QuickCapture';
 import { Inbox } from './Inbox';
-import { PD_CAPTURED_ITEMS_PATH } from '@/constants/paths';
 import { usePersonalDashboardContext } from '@/context/personalDashboardContext';
 import PersonalDashboardPlugin from '@/main';
 import { Notice, TFile } from 'obsidian';
@@ -20,7 +19,7 @@ export function RightPanel({
 	const { app } = usePersonalDashboardContext();
 
 	const handleOnCapture = async ({ title, text, tag }: OnCaptureProps) => {
-		const path = `${PD_CAPTURED_ITEMS_PATH}/${title}.md`;
+		const path = `${plugin.capturedItemsPath}/${title}.md`;
 
 		const frontMatterString = `---
 tag: ${tag}
@@ -51,7 +50,7 @@ tag: ${tag}
 
 	const handleOnOpen = (item: CaptureItem) => {
 		const file = app.vault.getAbstractFileByPath(
-			`${PD_CAPTURED_ITEMS_PATH}/${item.title}.md`,
+			`${plugin.capturedItemsPath}/${item.title}.md`,
 		);
 
 		if (!(file instanceof TFile)) return;

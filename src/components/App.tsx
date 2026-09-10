@@ -19,7 +19,7 @@ export function App({ plugin }: AppProps) {
 		plugin.capturedItemsStore.getSnapshot,
 	);
 
-	const ctx = useMemo(() => ({ app: plugin.app }), [plugin.app]);
+	const ctx = useMemo(() => ({ app: plugin.app, plugin }), [plugin]);
 
 	return (
 		<PersonalDashboardContext.Provider value={ctx}>

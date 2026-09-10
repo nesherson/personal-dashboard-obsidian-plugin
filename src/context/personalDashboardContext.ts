@@ -1,8 +1,11 @@
 import { App } from 'obsidian';
 import { createContext, useContext } from 'react';
 
+import type PersonalDashboardPlugin from '@/main';
+
 interface PersonalDashboardContextType {
 	app: App;
+	plugin: PersonalDashboardPlugin;
 }
 
 export const PersonalDashboardContext =

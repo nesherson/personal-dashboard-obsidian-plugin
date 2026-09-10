@@ -2,9 +2,14 @@ export interface PersonalDashboardState {
 	captureItems: CaptureItem[];
 }
 
-export const TAGS = ['Idea', 'Task', 'Note'];
+export const TAGS = ['Idea', 'Task', 'Note'] as const;
 
-export type Tag = 'Idea' | 'Task' | 'Note';
+export type Tag = (typeof TAGS)[number];
+
+export const DEFAULT_TAG: Tag = 'Note';
+
+export const isTag = (value: unknown): value is Tag =>
+	TAGS.includes(value as Tag);
 
 export interface Area {
 	id: string;

@@ -1,6 +1,6 @@
 import { useCallback, useState, SyntheticEvent } from 'react';
 
-import { Tag, TAGS } from '@/types/personalDashboardTypes';
+import { DEFAULT_TAG, Tag, TAGS } from '@/types/personalDashboardTypes';
 
 export interface OnCaptureProps {
 	title: string;
@@ -10,18 +10,18 @@ export interface OnCaptureProps {
 
 interface QuickCaptureProps {
 	onCapture: ({ title, text, tag }: OnCaptureProps) => Promise<void>;
-	tags: string[];
-	defaultTag: string;
+	tags?: readonly Tag[];
+	defaultTag?: Tag;
 }
 
 export function QuickCapture({
 	onCapture,
 	tags = TAGS,
-	defaultTag = 'Note',
+	defaultTag = DEFAULT_TAG,
 }: QuickCaptureProps) {
 	const [title, setTitle] = useState('');
 	const [text, setText] = useState('');
-	const [tag, setTag] = useState<Tag>(defaultTag as Tag);
+	const [tag, setTag] = useState<Tag>(defaultTag);
 	const [focused, setFocused] = useState(false);
 
 	const submit = useCallback(

@@ -1,20 +1,39 @@
-import { Plugin, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
+import { Notice, Plugin, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 
 import {
 	PERSONAL_DASHBOARD_VIEW_TYPE,
 	PersonalDashboardView,
 } from './views/PersonalDashboardView';
-import { Area, CaptureItem, Tag } from './types/personalDashboardTypes';
+import {
+	Area,
+	CaptureItem,
+	DEFAULT_TAG,
+	isTag,
+} from './types/personalDashboardTypes';
 import { AreaStore } from './store/areaStore';
 import { CapturedItemsStore } from './store/capturedItemsStore';
 import { getRelativeTimeString } from './utils/time';
-import { PD_AREAS_PATH, PD_CAPTURED_ITEMS_PATH } from './constants/paths';
+import {
+	cleanSettings,
+	DEFAULT_SETTINGS,
+	PersonalDashboardSettings,
+	PersonalDashboardSettingTab,
+} from './settings';
+
+export interface FolderChange {
+	key: keyof PersonalDashboardSettings;
+	oldName: string;
+}
 
 export default class PersonalDashboardPlugin extends Plugin {
+	settings: PersonalDashboardSettings = { ...DEFAULT_SETTINGS };
 	areaStore = new AreaStore();
 	capturedItemsStore = new CapturedItemsStore();
 
 	async onload() {
+		await this.loadSettings();
+		this.addSettingTab(new PersonalDashboardSettingTab(this.app, this));
+
 		this.registerView(
 			PERSONAL_DASHBOARD_VIEW_TYPE,
 			(leaf) => new PersonalDashboardView(leaf, this),
@@ -36,25 +55,30 @@ export default class PersonalDashboardPlugin extends Plugin {
 			},
 		});
 
-		this.app.workspace.onLayoutReady(async () => {
-			this.syncAreasFromFolder();
-			await this.syncCapturedItemsFromFolder();
+		this.app.workspace.onLayoutReady(() => {
+			void this.applyFolderSettings();
 		});
 
 		this.registerEvent(
 			this.app.vault.on('create', (file) => {
-				if (file.path.contains(PD_AREAS_PATH)) {
+				if (this.inAreasFolder(file.path)) {
 					this.syncAreasFromFolder();
 				}
 			}),
 		);
 		this.registerEvent(
-			this.app.vault.on('rename', async (file) => {
-				if (file.path.contains(PD_AREAS_PATH)) {
+			this.app.vault.on('rename', async (file, oldPath) => {
+				if (
+					this.inAreasFolder(file.path) ||
+					this.inAreasFolder(oldPath)
+				) {
 					this.syncAreasFromFolder();
 				}
 
-				if (file.path.contains(PD_CAPTURED_ITEMS_PATH)) {
+				if (
+					this.inCapturedItemsFolder(file.path) ||
+					this.inCapturedItemsFolder(oldPath)
+				) {
 					await this.syncCapturedItemsFromFolder();
 				}
 			}),
@@ -62,11 +86,11 @@ export default class PersonalDashboardPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.vault.on('modify', async (file) => {
-				if (file.path.contains(PD_AREAS_PATH)) {
+				if (this.inAreasFolder(file.path)) {
 					this.syncAreasFromFolder();
 				}
 
-				if (file.path.contains(PD_CAPTURED_ITEMS_PATH)) {
+				if (this.inCapturedItemsFolder(file.path)) {
 					await this.syncCapturedItemsFromFolder();
 				}
 			}),
@@ -74,11 +98,11 @@ export default class PersonalDashboardPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.vault.on('delete', async (file) => {
-				if (file.path.contains(PD_AREAS_PATH)) {
+				if (this.inAreasFolder(file.path)) {
 					this.syncAreasFromFolder();
 				}
 
-				if (file.path.contains(PD_CAPTURED_ITEMS_PATH)) {
+				if (this.inCapturedItemsFolder(file.path)) {
 					await this.syncCapturedItemsFromFolder();
 				}
 			}),
@@ -86,7 +110,7 @@ export default class PersonalDashboardPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.metadataCache.on('changed', (file) => {
-				if (file.path.contains(PD_AREAS_PATH)) {
+				if (this.inAreasFolder(file.path)) {
 					this.syncAreasFromFolder();
 				}
 			}),
@@ -118,9 +142,85 @@ export default class PersonalDashboardPlugin extends Plugin {
 		}
 	}
 
+	async loadSettings() {
+		this.settings = cleanSettings(
+			(await this.loadData()) as Partial<PersonalDashboardSettings> | null,
+		);
+	}
+
+	get areasPath() {
+		return `${this.settings.baseFolder}/${this.settings.areasFolder}`;
+	}
+
+	get capturedItemsPath() {
+		return `${this.settings.baseFolder}/${this.settings.capturedItemsFolder}`;
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+
+	async applyFolderSettings(change?: FolderChange) {
+		if (change) await this.renameConfiguredFolder(change);
+
+		await this.ensureFolder(this.settings.baseFolder);
+		await this.ensureFolder(this.areasPath);
+		await this.ensureFolder(this.capturedItemsPath);
+
+		this.syncAreasFromFolder();
+		await this.syncCapturedItemsFromFolder();
+	}
+
+	private async renameConfiguredFolder({ key, oldName }: FolderChange) {
+		const newName = this.settings[key];
+		if (oldName === newName) return;
+
+		const [oldPath, newPath] =
+			key === 'baseFolder'
+				? [oldName, newName]
+				: [
+						`${this.settings.baseFolder}/${oldName}`,
+						`${this.settings.baseFolder}/${newName}`,
+					];
+
+		const oldFolder = this.app.vault.getAbstractFileByPath(oldPath);
+		if (!(oldFolder instanceof TFolder)) return;
+
+		if (this.app.vault.getAbstractFileByPath(newPath) !== null) {
+			new Notice(
+				`"${newPath}" already exists, so "${oldPath}" was left in place.`,
+			);
+			return;
+		}
+
+		try {
+			await this.app.fileManager.renameFile(oldFolder, newPath);
+		} catch (err) {
+			new Notice(`Couldn't rename "${oldPath}" to "${newPath}".`);
+			console.error(err);
+		}
+	}
+
+	private async ensureFolder(path: string) {
+		if (this.app.vault.getAbstractFileByPath(path) === null) {
+			await this.app.vault.createFolder(path);
+		}
+	}
+
+	private inAreasFolder(path: string) {
+		return path.startsWith(this.areasPath + '/');
+	}
+
+	private inCapturedItemsFolder(path: string) {
+		return path.startsWith(this.capturedItemsPath + '/');
+	}
+
 	syncAreasFromFolder() {
-		const folder = this.app.vault.getAbstractFileByPath(PD_AREAS_PATH);
-		if (!(folder instanceof TFolder)) return;
+		const folder = this.app.vault.getAbstractFileByPath(this.areasPath);
+		if (!(folder instanceof TFolder)) {
+			this.areaStore.setAreas([]);
+			return;
+		}
 
 		const areas: Area[] = [];
 
@@ -145,9 +245,12 @@ export default class PersonalDashboardPlugin extends Plugin {
 
 	async syncCapturedItemsFromFolder() {
 		const folder = this.app.vault.getAbstractFileByPath(
-			PD_CAPTURED_ITEMS_PATH,
+			this.capturedItemsPath,
 		);
-		if (!(folder instanceof TFolder)) return;
+		if (!(folder instanceof TFolder)) {
+			this.capturedItemsStore.setItems([]);
+			return;
+		}
 
 		const capturedItems: CaptureItem[] = [];
 
@@ -164,7 +267,7 @@ export default class PersonalDashboardPlugin extends Plugin {
 			capturedItems.push({
 				id: crypto.randomUUID(),
 				title: file.basename,
-				tag: frontmatter?.tag as Tag,
+				tag: isTag(frontmatter?.tag) ? frontmatter.tag : DEFAULT_TAG,
 				text: text,
 				time: file.stat.ctime,
 			});

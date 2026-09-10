@@ -3,7 +3,6 @@ import { useLayoutEffect, useRef, useState, ReactNode } from 'react';
 import { Popup } from './Popup';
 import { ObsidianIcon } from './ui/ObsidianIcon';
 import { usePersonalDashboardContext } from '@/context/personalDashboardContext';
-import { PD_AREAS_PATH } from '@/constants/paths';
 import { TFile } from 'obsidian';
 
 interface TileProps {
@@ -18,7 +17,7 @@ const GAP = 6;
 const EDGE = 12;
 
 export function Tile({ area, open, onOpen, onClose }: TileProps) {
-	const { app } = usePersonalDashboardContext();
+	const { app, plugin } = usePersonalDashboardContext();
 
 	const ref = useRef<HTMLDivElement>(null);
 	const [flip, setFlip] = useState({ right: false, above: false });
@@ -65,7 +64,7 @@ export function Tile({ area, open, onOpen, onClose }: TileProps) {
 					onOpen();
 				} else if (!touch) {
 					const file = app.vault.getAbstractFileByPath(
-						`${PD_AREAS_PATH}/${area.id}.md`,
+						`${plugin.areasPath}/${area.id}.md`,
 					);
 
 					if (!(file instanceof TFile)) return;
