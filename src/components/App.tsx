@@ -2,9 +2,7 @@ import { useMemo, useSyncExternalStore } from 'react';
 
 import PersonalDashboardPlugin from '@/main';
 import { AreaView } from './AreaView';
-import {
-	PersonalDashboardContext,
-} from '@/context/personalDashboardContext';
+import { PersonalDashboardContext } from '@/context/personalDashboardContext';
 import { RightPanel } from './RightPanel/RightPanel';
 
 interface AppProps {
@@ -18,25 +16,16 @@ export function App({ plugin }: AppProps) {
 	);
 	const capturedItems = useSyncExternalStore(
 		plugin.capturedItemsStore.subscribe,
-		plugin.capturedItemsStore.getSnapshot
+		plugin.capturedItemsStore.getSnapshot,
 	);
 
-	const ctx = useMemo(
-		() => ({ app: plugin.app }),
-		[plugin.app],
-	);
+	const ctx = useMemo(() => ({ app: plugin.app }), [plugin.app]);
 
 	return (
 		<PersonalDashboardContext.Provider value={ctx}>
 			<div className="main">
 				<AreaView areas={areas} />
-				<RightPanel
-					items={capturedItems}
-					plugin={plugin}
-					onFile={() => {}}
-					onArchive={() => {}}
-					onOpen={() => {}}
-				/>
+				<RightPanel items={capturedItems} plugin={plugin} />
 			</div>
 		</PersonalDashboardContext.Provider>
 	);

@@ -1,14 +1,12 @@
-import { CaptureItem } from "@/types/personalDashboardTypes";
-import { InboxItem } from "./InboxItem";
+import { CaptureItem } from '@/types/personalDashboardTypes';
+import { InboxItem } from './InboxItem';
 
 interface InboxProps {
 	items: CaptureItem[];
-	onFile: (item: CaptureItem) => void;
-	onArchive: (item: CaptureItem) => void;
 	onOpen: (item: CaptureItem) => void;
 }
 
-export function Inbox({ items = [], onFile, onArchive, onOpen }: InboxProps) {
+export function Inbox({ items = [], onOpen }: InboxProps) {
 	if (!items.length) {
 		return (
 			<div className="pd-empty">
@@ -23,13 +21,7 @@ export function Inbox({ items = [], onFile, onArchive, onOpen }: InboxProps) {
 	return (
 		<ul className="pd-inbox">
 			{items.map((item) => (
-				<InboxItem
-					key={item.id}
-					item={item}
-					onFile={onFile}
-					onArchive={onArchive}
-					onOpen={onOpen}
-				/>
+				<InboxItem key={item.id} item={item} onOpen={onOpen} />
 			))}
 		</ul>
 	);

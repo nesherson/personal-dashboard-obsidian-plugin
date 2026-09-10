@@ -1,4 +1,4 @@
-import { editorEditorField, Plugin, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
+import { Plugin, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
 
 import {
 	PERSONAL_DASHBOARD_VIEW_TYPE,
@@ -8,7 +8,7 @@ import { Area, CaptureItem, Tag } from './types/personalDashboardTypes';
 import { AreaStore } from './store/areaStore';
 import { CapturedItemsStore } from './store/capturedItemsStore';
 import { getRelativeTimeString } from './utils/time';
-import { PD_AREAS_PATH, PD_CAPTURE_ITEMS_PATH } from './constants/paths';
+import { PD_AREAS_PATH, PD_CAPTURED_ITEMS_PATH } from './constants/paths';
 
 export default class PersonalDashboardPlugin extends Plugin {
 	areaStore = new AreaStore();
@@ -36,8 +36,9 @@ export default class PersonalDashboardPlugin extends Plugin {
 			},
 		});
 
-		this.app.workspace.onLayoutReady(() => {
+		this.app.workspace.onLayoutReady(async () => {
 			this.syncAreasFromFolder();
+			await this.syncCapturedItemsFromFolder();
 		});
 
 		this.registerEvent(
@@ -45,44 +46,40 @@ export default class PersonalDashboardPlugin extends Plugin {
 				if (file.path.contains(PD_AREAS_PATH)) {
 					this.syncAreasFromFolder();
 				}
-
-				// if (file.path.contains(PD_CAPTURE_ITEMS_PATH)) {
-				// 	this.syncCapturedItemsFromFolder();
-				// }
 			}),
 		);
 		this.registerEvent(
-			this.app.vault.on('rename', (file) => {
+			this.app.vault.on('rename', async (file) => {
 				if (file.path.contains(PD_AREAS_PATH)) {
 					this.syncAreasFromFolder();
 				}
 
-				if (file.path.contains(PD_CAPTURE_ITEMS_PATH)) {
-					this.syncCapturedItemsFromFolder();
+				if (file.path.contains(PD_CAPTURED_ITEMS_PATH)) {
+					await this.syncCapturedItemsFromFolder();
 				}
 			}),
 		);
 
 		this.registerEvent(
-			this.app.vault.on('modify', (file) => {
+			this.app.vault.on('modify', async (file) => {
 				if (file.path.contains(PD_AREAS_PATH)) {
 					this.syncAreasFromFolder();
 				}
 
-				if (file.path.contains(PD_CAPTURE_ITEMS_PATH)) {
-					this.syncCapturedItemsFromFolder();
+				if (file.path.contains(PD_CAPTURED_ITEMS_PATH)) {
+					await this.syncCapturedItemsFromFolder();
 				}
 			}),
 		);
 
 		this.registerEvent(
-			this.app.vault.on('delete', (file) => {
+			this.app.vault.on('delete', async (file) => {
 				if (file.path.contains(PD_AREAS_PATH)) {
 					this.syncAreasFromFolder();
 				}
 
-				if (file.path.contains(PD_CAPTURE_ITEMS_PATH)) {
-					this.syncCapturedItemsFromFolder();
+				if (file.path.contains(PD_CAPTURED_ITEMS_PATH)) {
+					await this.syncCapturedItemsFromFolder();
 				}
 			}),
 		);
@@ -102,7 +99,9 @@ export default class PersonalDashboardPlugin extends Plugin {
 		const { workspace } = this.app;
 
 		let leaf: WorkspaceLeaf | undefined = undefined;
-		const leaves = workspace.getLeavesOfType(PERSONAL_DASHBOARD_VIEW_TYPE);
+		const leaves = workspace.getLeavesOfType(
+			PERSONAL_DASHBOARD_VIEW_TYPE,
+		);
 
 		if (leaves.length > 0) {
 			leaf = leaves[0];
@@ -144,9 +143,9 @@ export default class PersonalDashboardPlugin extends Plugin {
 		this.areaStore.setAreas(areas);
 	}
 
-	syncCapturedItemsFromFolder() {
+	async syncCapturedItemsFromFolder() {
 		const folder = this.app.vault.getAbstractFileByPath(
-			PD_CAPTURE_ITEMS_PATH,
+			PD_CAPTURED_ITEMS_PATH,
 		);
 		if (!(folder instanceof TFolder)) return;
 
@@ -158,11 +157,16 @@ export default class PersonalDashboardPlugin extends Plugin {
 			const frontmatter =
 				this.app.metadataCache.getFileCache(file)?.frontmatter;
 
+			const fileText = await this.app.vault.read(file);
+			const frontMatterEndLineIdx = fileText.indexOf('---', 4);
+			const text = fileText.slice(frontMatterEndLineIdx + 3);
+
 			capturedItems.push({
 				id: crypto.randomUUID(),
+				title: file.basename,
 				tag: frontmatter?.tag as Tag,
-				text: file.basename,
-				time: file.stat.ctime
+				text: text,
+				time: file.stat.ctime,
 			});
 		}
 

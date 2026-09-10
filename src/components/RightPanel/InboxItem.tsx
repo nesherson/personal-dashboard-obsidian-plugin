@@ -1,26 +1,19 @@
-import { CaptureItem } from "@/types/personalDashboardTypes";
+import { CaptureItem } from '@/types/personalDashboardTypes';
 
 interface InboxItemProps {
 	item: CaptureItem;
-	onFile: (item: CaptureItem) => void;
-	onArchive: (item: CaptureItem) => void;
 	onOpen: (item: CaptureItem) => void;
 }
 
-export function InboxItem({
-	item,
-	onFile,
-	onArchive,
-	onOpen,
-}: InboxItemProps) {
+export function InboxItem({ item, onOpen }: InboxItemProps) {
 	return (
 		<li
+			title={item.text}
 			className="pd-item"
 			data-tag={item.tag || undefined}
-			onClick={() => onOpen?.(item)}
 		>
 			<div className="pd-item__body">
-				<div className="pd-item__text">{item.text}</div>
+				<div className="pd-item__text">{item.title}</div>
 				<div className="pd-item__meta">
 					<span className="pd-item__time">
 						{new Date(item.time).toLocaleTimeString()}
@@ -33,23 +26,13 @@ export function InboxItem({
 			<div className="pd-item__actions">
 				<button
 					className="pd-item__action"
-					aria-label="File into note"
+					aria-label="Open note"
 					onClick={(e) => {
 						e.stopPropagation();
-						onFile?.(item);
+						onOpen?.(item);
 					}}
 				>
 					&#8599;
-				</button>
-				<button
-					className="pd-item__action"
-					aria-label="Archive"
-					onClick={(e) => {
-						e.stopPropagation();
-						onArchive?.(item);
-					}}
-				>
-					&#10003;
 				</button>
 			</div>
 		</li>

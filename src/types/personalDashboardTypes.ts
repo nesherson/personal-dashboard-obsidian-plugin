@@ -18,6 +18,7 @@ export interface Area {
 
 export interface CaptureItem {
 	id: string;
+	title: string;
 	text: string;
 	tag: Tag;
 	time: number;
