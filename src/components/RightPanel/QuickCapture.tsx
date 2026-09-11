@@ -2,14 +2,14 @@ import { useCallback, useState, SyntheticEvent } from 'react';
 
 import { DEFAULT_TAG, Tag, TAGS } from '@/types/personalDashboardTypes';
 
-export interface OnCaptureProps {
+export interface CaptureNoteProps {
 	title: string;
 	text: string;
 	tag: Tag;
 }
 
 interface QuickCaptureProps {
-	onCapture: ({ title, text, tag }: OnCaptureProps) => Promise<void>;
+	onCapture: ({ title, text, tag }: CaptureNoteProps) => Promise<void>;
 	tags?: readonly Tag[];
 	defaultTag?: Tag;
 }
@@ -27,11 +27,10 @@ export function QuickCapture({
 	const submit = useCallback(
 		async (e: SyntheticEvent) => {
 			e?.preventDefault();
-			const titleValue = title.trim();
-			const value = text.trim();
-			if (!titleValue) return;
-			if (!value) return;
-			await onCapture({ title: title, text: value, tag });
+			const noteTitle = title;
+			const noteText = text;
+			if (!noteTitle) return;
+			await onCapture({ title: title, text: noteText, tag });
 			setText('');
 			setTitle('');
 		},
@@ -49,7 +48,7 @@ export function QuickCapture({
 			<textarea
 				className="pd-capture__textarea"
 				rows={3}
-				placeholder="Write it down and forget it…"
+				placeholder="Note details"
 				value={text}
 				onChange={(e) => setText(e.target.value)}
 				onFocus={() => setFocused(true)}

@@ -1,9 +1,9 @@
 import { CaptureItem, TAGS } from '@/types/personalDashboardTypes';
-import { OnCaptureProps, QuickCapture } from './QuickCapture';
+import { CaptureNoteProps, QuickCapture } from './QuickCapture';
 import { Inbox } from './Inbox';
 import { usePersonalDashboardContext } from '@/context/personalDashboardContext';
 import PersonalDashboardPlugin from '@/main';
-import { Notice, TFile } from 'obsidian';
+import { TFile } from 'obsidian';
 
 interface RightPanelProps {
 	items: CaptureItem[];
@@ -18,34 +18,12 @@ export function RightPanel({
 }: RightPanelProps) {
 	const { app } = usePersonalDashboardContext();
 
-	const handleOnCapture = async ({ title, text, tag }: OnCaptureProps) => {
-		const path = `${plugin.capturedItemsPath}/${title}.md`;
-
-		const frontMatterString = `---
-tag: ${tag}
----`;
-		const mainContent = text;
-		const fullFileContent = `${frontMatterString}\n${mainContent}`;
-
-		try {
-			const createdFile = await app.vault.create(path, fullFileContent);
-
-			plugin.capturedItemsStore.setItems([
-				...plugin.capturedItemsStore.getSnapshot(),
-				{
-					id: crypto.randomUUID(),
-					title: title,
-					text: text,
-					tag: tag,
-					time: createdFile.stat.ctime,
-				},
-			]);
-		} catch (err) {
-			if (err instanceof Error) {
-				new Notice('An error occured while trying to create note!');
-				console.error(err);
-			}
-		}
+	const handleOnCapture = async ({
+		title,
+		text,
+		tag,
+	}: CaptureNoteProps) => {
+		await plugin.captureNote({ title: title, text: text, tag: tag });
 	};
 
 	const handleOnOpen = (item: CaptureItem) => {

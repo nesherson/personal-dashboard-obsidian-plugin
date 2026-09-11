@@ -596,3 +596,51 @@
 		transform: none;
 	}
 }
+
+.modal-content .setting-item.pd-quick-capture-modal-input {
+	display: block;
+	border-top: none;
+	padding-top: 0;
+}
+
+.pd-quick-capture-modal-input .setting-item-control {
+	width: 100%;
+	display: block;
+	text-align: start;
+}
+
+.pd-quick-capture-modal-input .setting-item-control input,
+.pd-quick-capture-modal-input .setting-item-control textarea {
+	width: 100%;
+	box-sizing: border-box;
+	resize: none;
+	padding: 10px 11px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 7px;
+	background: var(--background-primary-alt);
+	font-family: inherit;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--text-normal);
+	outline: none;
+}
+
+.pd-quick-capture-modal-input .setting-item-control textarea {
+	min-height: 62px;
+}
+
+.pd-quick-capture-modal-button-group {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 15px;
+}
+
+.pd-quick-capture-modal-button-group button.pd-tag:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.pd-quick-capture-modal-button-group button.pd-tag.is-active {
+	border-color: var(--interactive-accent);
+	background: color-mix(in oklab, var(--interactive-accent) 15%, transparent);
+	color: var(--text-normal);
+}

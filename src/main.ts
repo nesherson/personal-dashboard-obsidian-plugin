@@ -19,6 +19,8 @@ import {
 	PersonalDashboardSettings,
 	PersonalDashboardSettingTab,
 } from './settings';
+import { QuickCaptureModal } from './views/modals/QuickCaptureModal';
+import { CaptureNoteProps } from './components/RightPanel/QuickCapture';
 
 export interface FolderChange {
 	key: keyof PersonalDashboardSettings;
@@ -52,6 +54,14 @@ export default class PersonalDashboardPlugin extends Plugin {
 			name: 'Open',
 			callback: async () => {
 				await this.activateView();
+			},
+		});
+
+		this.addCommand({
+			id: 'open-quick-capture-modal',
+			name: 'Quick capture',
+			callback: () => {
+				new QuickCaptureModal(this).open();
 			},
 		});
 
@@ -274,5 +284,39 @@ export default class PersonalDashboardPlugin extends Plugin {
 		}
 
 		this.capturedItemsStore.setItems(capturedItems);
+	}
+
+	async captureNote({
+		title,
+		text,
+		tag,
+	}: CaptureNoteProps): Promise<TFile> {
+		const trimmedTitle = title.trim();
+		const trimmedText = text.trim();
+
+		const path = `${this.capturedItemsPath}/${trimmedTitle}.md`;
+
+		const frontMatterString = `---
+tag: ${tag}
+---`;
+		const fullFileContent = `${frontMatterString}\n${trimmedText}`;
+
+		const createdFile = await this.app.vault.create(
+			path,
+			fullFileContent,
+		);
+
+		this.capturedItemsStore.setItems([
+			...this.capturedItemsStore.getSnapshot(),
+			{
+				id: crypto.randomUUID(),
+				title: trimmedTitle,
+				text: trimmedText,
+				tag: tag,
+				time: createdFile.stat.ctime,
+			},
+		]);
+
+		return createdFile;
 	}
 }
